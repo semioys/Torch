@@ -244,7 +244,14 @@ endif()
 if(NOT MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_CXX_FLAGS "-Wno-narrowing")
+    if(NINTENDO_SWITCH)
+        # Keep the toolchain's flags (-D__SWITCH__, -march, -mtp=soft,
+        # -ftls-model=local-exec): without -mtp=soft thread_local reads the
+        # wrong thread register on Horizon.
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
+    else()
+        set(CMAKE_CXX_FLAGS "-Wno-narrowing")
+    endif()
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Debug>:
