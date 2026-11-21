@@ -1136,7 +1136,7 @@ void Companion::ProcessExportFile() {
                 if (this->gConfig.exporterType == ExportType::Code && this->gIndividualIncludes) {
                     fs::path outinc =
                         fs::path(this->gConfig.outputPath) / this->gCurrentDirectory.parent_path() /
-                        fs::relative(fs::path(result.name + ".inc.c"), this->gCurrentDirectory.parent_path());
+                        TorchRelativePath(fs::path(result.name + ".inc.c"), this->gCurrentDirectory.parent_path());
 
                     if (!exists(outinc.parent_path())) {
                         create_directories(outinc.parent_path());
@@ -1231,9 +1231,9 @@ void Companion::ProcessFile(YAML::Node root, std::atomic<size_t>& assetCount) {
     // directory must be resolved before the loop. Default to the file's own
     // path, then honor a :config directory override (used to register a room's
     // assets under its scene's directory).
-    auto relPath = relative(fs::path(this->gCurrentFile), this->gAssetPath).replace_extension("");
+    auto relPath = TorchRelativePath(fs::path(this->gCurrentFile), this->gAssetPath).replace_extension("");
     if (StringHelper::StartsWith(relPath.string(), "../"))
-        relPath = relative(fs::path(this->gCurrentFile), this->gCommonAssetPath).replace_extension("");
+        relPath = TorchRelativePath(fs::path(this->gCurrentFile), this->gCommonAssetPath).replace_extension("");
 
     this->gCurrentDirectory = relPath;
 
