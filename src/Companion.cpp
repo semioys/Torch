@@ -162,6 +162,17 @@
 
 #include "preprocess/CompTool.h"
 
+// std::filesystem::relative() goes through weakly_canonical(), which newlib
+// cannot do for devkitPro device paths ("romfs:/..."). A lexical relative path
+// is equivalent here: both sides are built from the same asset root.
+static std::filesystem::path TorchRelativePath(const std::filesystem::path& path, const std::filesystem::path& base) {
+#ifdef __SWITCH__
+    return path.lexically_normal().lexically_relative(base.lexically_normal());
+#else
+    return std::filesystem::relative(path, base);
+#endif
+}
+
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
@@ -553,8 +564,8 @@ void Companion::ParseCurrentFileConfig(YAML::Node node, std::atomic<size_t>& ass
 
                 std::string externalFileName =
                     (this->gSourceDirectory / externalFile.as<std::string>()).generic_string();
-                const auto relPath = std::filesystem::relative(externalFileName, this->gAssetPath).string();
-                const auto relCommonPath = std::filesystem::relative(externalFileName, this->gCommonAssetPath).string();
+                const auto relPath = TorchRelativePath(externalFileName, this->gAssetPath).string();
+                const auto relCommonPath = TorchRelativePath(externalFileName, this->gCommonAssetPath).string();
                 if (StringHelper::StartsWith(relPath , "../")) {
                     if (StringHelper::StartsWith(relCommonPath, "../"))
                         throw std::runtime_error("External File " + externalFileName + " Not In Asset Directory " +
@@ -575,7 +586,7 @@ void Companion::ParseCurrentFileConfig(YAML::Node node, std::atomic<size_t>& ass
 
                     this->gCurrentFile = externalFileName;
                     this->gCurrentDirectory =
-                        std::filesystem::relative(externalFileName, this->gAssetPath).replace_extension("");
+                        TorchRelativePath(externalFileName, this->gAssetPath).replace_extension("");
 
                     YAML::Node root = YAML::LoadFile(externalFileName);
 
